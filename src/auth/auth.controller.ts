@@ -17,6 +17,6 @@ export class AuthController {
   @Public()
   @Get()
   async test() {
-    return 'working';
+    return this.authService.generateRefreshToken(1);
   }
 }

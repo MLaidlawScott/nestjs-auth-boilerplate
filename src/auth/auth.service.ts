@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
+import { User } from '@prisma/client';
+import { compare } from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -9,19 +11,40 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(username: string, pass: string): Promise<any> {
-    const user = await this.usersService.findOne(username);
-    if (user && user.password === pass) {
+  async validateUser(
+    email: string,
+    pass: string,
+  ): Promise<Omit<User, 'password'>> {
+    const user = await this.usersService.findByUniqueArgs({ email });
+    // hash password here
+    if (user && (await compare(pass, user.password))) {
       const { password, ...result } = user;
       return result;
     }
     return null;
   }
 
-  async login(user: any) {
-    const payload = { username: user.username, sub: user.userId };
+  async login(user: User) {
+    const payload = { sub: user.email };
     return {
       access_token: this.jwtService.sign(payload),
     };
+  }
+
+  // sub will be the unique user id
+  async generateAccessToken(sub: number): Promise<string> {
+    return this.jwtService.sign({ sub });
+  }
+
+  async generateRefreshToken(sub: number) {
+    // generate token
+    const payload = { sub };
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '1d' });
+
+    // persist token in database
+    // only if we successfully persist the token should be return it
+
+    // NEED TO IMPLEMENT PERSISTENCE FIRST, THIS IS JUST FOR TESTING
+    return refreshToken;
   }
 }

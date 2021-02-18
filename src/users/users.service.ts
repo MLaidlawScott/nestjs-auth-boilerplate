@@ -1,28 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from 'src/db/prisma.service';
-import { JwtService } from '@nestjs/jwt';
+import { Prisma, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-
-// This should be a real class/interface representing a user entity
-export type User = any;
+import { PrismaService } from 'src/db/prisma.service';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
-
-  private readonly users = [
-    {
-      userId: 1,
-      username: 'john',
-      password: 'changeme',
-    },
-    {
-      userId: 2,
-      username: 'maria',
-      password: 'guess',
-    },
-  ];
 
   async createUser(data: Prisma.UserCreateInput) {
     const saltOrRounds = 12;
@@ -32,9 +15,8 @@ export class UsersService {
       const newUser = await this.prisma.user.create({
         data,
       });
-      const { password, ...result } = newUser;
 
-      // const payload = { sub: newUser.id };
+      const { password, ...result } = newUser;
 
       return result;
     } catch (err) {
@@ -42,7 +24,9 @@ export class UsersService {
     }
   }
 
-  async findOne(username: string): Promise<User | undefined> {
-    return this.users.find((user) => user.username === username);
+  async findByUniqueArgs(
+    userWhereUniqueInput: Prisma.UserWhereUniqueInput,
+  ): Promise<User | null> {
+    return this.prisma.user.findUnique({ where: userWhereUniqueInput });
   }
 }

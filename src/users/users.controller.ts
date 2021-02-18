@@ -16,5 +16,6 @@ export class UsersController {
   @Get()
   async getUser(@Request() req) {
     // return this.usersService.
+    return 'hello';
   }
 }
