@@ -3,6 +3,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import { compare } from 'bcrypt';
+import { RegisterDto } from './models/register.dto';
 
 @Injectable()
 export class AuthService {
@@ -31,14 +32,31 @@ export class AuthService {
     };
   }
 
+  async register(registerDto: RegisterDto) {
+    const user = await this.usersService.createUser({
+      email: registerDto.email,
+      password: registerDto.password,
+    });
+    const accessToken = await this.generateAccessToken(user.email);
+    const refreshToken = await this.generateRefreshToken(
+      user.email,
+      registerDto.clientId,
+    );
+    return {
+      user,
+      accessToken,
+      refreshToken,
+    };
+  }
+
   // sub will be the unique user id
-  async generateAccessToken(sub: number): Promise<string> {
+  async generateAccessToken(sub: string): Promise<string> {
     return this.jwtService.sign({ sub });
   }
 
-  async generateRefreshToken(sub: number) {
+  async generateRefreshToken(sub: string, clientId: string) {
     // generate token
-    const payload = { sub };
+    const payload = { sub, clientId };
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '1d' });
 
     // persist token in database

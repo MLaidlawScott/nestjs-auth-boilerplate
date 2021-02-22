@@ -7,7 +7,9 @@ import { PrismaService } from 'src/db/prisma.service';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async createUser(data: Prisma.UserCreateInput) {
+  async createUser(
+    data: Prisma.UserCreateInput,
+  ): Promise<Omit<User, 'password'>> {
     const saltOrRounds = 12;
     const hashedPassword = await bcrypt.hash(data.password, saltOrRounds);
     data['password'] = hashedPassword;
@@ -20,6 +22,7 @@ export class UsersService {
 
       return result;
     } catch (err) {
+      console.log(err);
       throw new BadRequestException();
     }
   }

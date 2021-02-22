@@ -1,6 +1,7 @@
-import { Controller, Request, Post, UseGuards, Get } from '@nestjs/common';
+import { Controller, Request, Post, UseGuards, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
+import { RegisterDto } from './models/register.dto';
 import { Public } from './publicRoute';
 
 @Controller('auth')
@@ -15,8 +16,8 @@ export class AuthController {
   }
 
   @Public()
-  @Get()
-  async test() {
-    return this.authService.generateRefreshToken(1);
+  @Post('register')
+  async register(@Body() registerDto: RegisterDto) {
+    return this.authService.register(registerDto);
   }
 }
