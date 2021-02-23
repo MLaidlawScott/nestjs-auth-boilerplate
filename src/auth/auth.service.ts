@@ -20,6 +20,7 @@ export class AuthService {
   ): Promise<Omit<User, 'password'>> {
     const user = await this.usersService.findByUniqueArgs({ email });
     if (user && (await compare(pass, user.password))) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
       return result;
     }

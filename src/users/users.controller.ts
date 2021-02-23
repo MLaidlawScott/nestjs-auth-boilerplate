@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Request } from '@nestjs/common';
+import { Controller, Post, Request } from '@nestjs/common';
 import { Public } from 'src/auth/publicRoute';
 import { UsersService } from './users.service';
 
