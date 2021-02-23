@@ -27,9 +27,9 @@ model Post {
 }
 
 model RefreshToken {
-  id         Int      @id @default(autoincrement())
+  id         Int    @id @default(autoincrement())
   token      String
+  user_email String
   client_id  String
-  is_revoked Boolean  @default(false)
-  expires    DateTime
+  expires    Int
 }

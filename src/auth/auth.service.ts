@@ -1,15 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import { compare } from 'bcrypt';
 import { RegisterDto } from './models/register.dto';
-
+import { RefreshTokensDto } from './models/refreshTokens.dto';
+import { RefreshTokensService } from './refreshTokens.service';
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private refreshTokensService: RefreshTokensService,
   ) {}
 
   async validateUser(
@@ -17,7 +19,6 @@ export class AuthService {
     pass: string,
   ): Promise<Omit<User, 'password'>> {
     const user = await this.usersService.findByUniqueArgs({ email });
-    // hash password here
     if (user && (await compare(pass, user.password))) {
       const { password, ...result } = user;
       return result;
@@ -25,10 +26,15 @@ export class AuthService {
     return null;
   }
 
-  async login(user: User) {
-    const payload = { sub: user.email };
+  async login(user: User, clientId: string) {
+    const accessToken = this.jwtService.sign({ sub: user.email });
+    const refreshToken = await this.refreshTokensService.generateNewRefreshTokenAndInvalidateOld(
+      user.email,
+      clientId,
+    );
     return {
-      access_token: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
     };
   }
 
@@ -37,8 +43,8 @@ export class AuthService {
       email: registerDto.email,
       password: registerDto.password,
     });
-    const accessToken = await this.generateAccessToken(user.email);
-    const refreshToken = await this.generateRefreshToken(
+    const accessToken: string = this.generateAccessToken(user.email);
+    const refreshToken: string = await this.refreshTokensService.generateNewRefreshTokenAndInvalidateOld(
       user.email,
       registerDto.clientId,
     );
@@ -49,20 +55,26 @@ export class AuthService {
     };
   }
 
-  // sub will be the unique user id
-  async generateAccessToken(sub: string): Promise<string> {
-    return this.jwtService.sign({ sub });
+  async refreshTokens(refreshTokensDto: RefreshTokensDto) {
+    try {
+      const validJwt = await this.refreshTokensService.validateRefreshToken(
+        refreshTokensDto.refreshToken,
+      );
+      const accessToken = this.generateAccessToken(validJwt.user_email);
+      const refreshToken = await this.refreshTokensService.generateNewRefreshTokenAndInvalidateOld(
+        validJwt.user_email,
+        validJwt.client_id,
+      );
+      return {
+        accessToken,
+        refreshToken,
+      };
+    } catch (err) {
+      throw new UnauthorizedException();
+    }
   }
 
-  async generateRefreshToken(sub: string, clientId: string) {
-    // generate token
-    const payload = { sub, clientId };
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '1d' });
-
-    // persist token in database
-    // only if we successfully persist the token should be return it
-
-    // NEED TO IMPLEMENT PERSISTENCE FIRST, THIS IS JUST FOR TESTING
-    return refreshToken;
+  private generateAccessToken(sub: string): string {
+    return this.jwtService.sign({ sub });
   }
 }
