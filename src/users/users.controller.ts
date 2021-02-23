@@ -11,11 +11,4 @@ export class UsersController {
   async createUser(@Request() req) {
     return this.usersService.createUser(req.body);
   }
-
-  @Public()
-  @Get()
-  async getUser(@Request() req) {
-    // return this.usersService.
-    return 'hello';
-  }
 }

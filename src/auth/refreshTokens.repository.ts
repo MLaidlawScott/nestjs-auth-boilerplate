@@ -20,15 +20,8 @@ export class RefreshTokensRepository {
   async findRefreshTokenByToken(
     refreshTokenWhereInput: Prisma.RefreshTokenWhereInput,
   ) {
-    // might need to change this to find first where not revoked?
     return this.prisma.refreshToken.findFirst({
       where: refreshTokenWhereInput,
     });
   }
-
-  // async findById(
-  //   userWhereUniqueInput: Prisma.UserWhereUniqueInput,
-  // ): Promise<User | null> {
-  //   return this.prisma.user.findUnique({ where: userWhereUniqueInput });
-  // }
 }

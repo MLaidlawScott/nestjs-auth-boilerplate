@@ -43,8 +43,8 @@ export class AuthService {
       email: registerDto.email,
       password: registerDto.password,
     });
-    const accessToken: string = this.generateAccessToken(user.email);
-    const refreshToken: string = await this.refreshTokensService.generateNewRefreshTokenAndInvalidateOld(
+    const accessToken = this.generateAccessToken(user.email);
+    const refreshToken = await this.refreshTokensService.generateNewRefreshTokenAndInvalidateOld(
       user.email,
       registerDto.clientId,
     );
