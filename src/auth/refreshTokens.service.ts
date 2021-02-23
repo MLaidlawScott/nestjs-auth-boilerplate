@@ -37,6 +37,13 @@ export class RefreshTokensService {
     }
   }
 
+  // Should you be using generateNewRefreshTokenAndInvalidateOld?
+  async invalidateRefreshTokens(userEmail: string, clientId: string) {
+    return await this.refreshTokensRepository.deleteTokens({
+      where: { AND: { client_id: clientId, user_email: userEmail } },
+    });
+  }
+
   // Use generateNewRefreshTokenAndInvalidateOld
   private async generateRefreshToken(sub: string, clientId: string) {
     const payload = { sub, clientId };
@@ -55,12 +62,5 @@ export class RefreshTokensService {
     }
 
     return refreshToken;
-  }
-
-  // Use generateNewRefreshTokenAndInvalidateOld
-  private async invalidateRefreshTokens(userEmail: string, clientId: string) {
-    return await this.refreshTokensRepository.deleteTokens({
-      where: { AND: { client_id: clientId, user_email: userEmail } },
-    });
   }
 }

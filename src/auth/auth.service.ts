@@ -6,6 +6,14 @@ import { compare } from 'bcrypt';
 import { RegisterDto } from './models/register.dto';
 import { RefreshTokensDto } from './models/refreshTokens.dto';
 import { RefreshTokensService } from './refreshTokens.service';
+import { LogoutDto } from './models/logout.dto';
+
+interface IValidRefreshToken {
+  sub: string;
+  clientId: string;
+  iat: number;
+  exp: number;
+}
 @Injectable()
 export class AuthService {
   constructor(
@@ -73,6 +81,23 @@ export class AuthService {
     } catch (err) {
       throw new UnauthorizedException();
     }
+  }
+
+  async logout(logoutDto: LogoutDto) {
+    try {
+      // need to verify token so you cant log out other users...
+      // perhaps this method could be more elegant.
+      const validRefreshToken: IValidRefreshToken = this.jwtService.verify(
+        logoutDto.refreshToken,
+      );
+      await this.refreshTokensService.invalidateRefreshTokens(
+        validRefreshToken.sub,
+        validRefreshToken.clientId,
+      );
+    } catch (err) {
+      console.log(err);
+    }
+    return true;
   }
 
   private generateAccessToken(sub: string): string {
